@@ -2,6 +2,7 @@ import '../sty.css'
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { format } from 'date-fns';
 
 const IvInput=()=>{
    const [report,setreport]=useState({
@@ -35,20 +36,38 @@ const IvInput=()=>{
       "day_3_night_time":"" , 
       "day_3_night_place":"" ,
       "date_of_arriving":"",
-      "time_of_arriving":"" 
+      "time_of_arriving":"" ,
+      "completion_date":""
 
 })
 
+
+const [selectedFile1, setSelectedFile1] = useState(null);
+const [selectedFile2, setSelectedFile2] = useState(null);
+const [selectedFile3, setSelectedFile3] = useState(null);
+const [selectedFile4, setSelectedFile4] = useState(null);
+const [selectedFile5, setSelectedFile5] = useState(null);
+const [newFileName, setNewFileName] = useState('');
+
    const navigate=useNavigate()
    const handlechange=(e)=>{
+      setreport((old)=>{
+         const date= new Date();
+         const currentDate=format(date,'dd-MM-yyyy');
+         return{
+            ...old,
+            completion_date:currentDate
+         }
+      })
       setreport((prev)=>({...prev,[e.target.name]:e.target.value}))
+    
    }
    console.log(report)
 const handleClick = async (e)=>{
    e.preventDefault()
    try{
       // alert(JSON.stringify(report))
-      await axios.put("http://localhost:1234/iv/update/1",report)
+      await axios.put("http://localhost:1234/iv/update/RPT5059",report)
       // alert(JSON.stringify(t.data.records))
 
       navigate("/")
@@ -57,6 +76,27 @@ const handleClick = async (e)=>{
       console.error(err);
   }
 }
+
+const handleFileChange1 =(e)=>{
+    if(File&& File.size >2*1024*1024){
+      alert("Please choose an image with a size below 2MB.");
+      e.target.value=null;
+      return;
+    }
+    else{
+      if(newFileName.length<=1){
+         const report=JSON.parse(sessionStorage.getItem("report_id"))
+         setNewFileName(report.event_title);
+      }
+
+      const currentDate=new Date();
+
+      const dd = String(currentDate.getDate()).padStart(2,'0');
+    }
+}
+
+
+
 
 return(
    <>
@@ -300,8 +340,8 @@ return(
 
     
              <div className='form-group'>
-                <label>No of Students Visited (List)</label>
-                <input type='file' onChange={handlechange}/>
+                <label htmlFor="event_photo_3">No of Students Visited (List)</label>
+                <input type='file' id='event_photos' name='students_visited_list' accept='image/gif, image/jpeg' onChange={handlechange} required maxSize="2MB"/>
              </div>
 
              <div className='form-group'>
@@ -398,6 +438,7 @@ return(
 </body>
    </>
 )
+
 }
 
 export default IvInput

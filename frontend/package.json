@@ -22,6 +22,7 @@
     "fs": "^0.0.1-security",
     "jspdf": "^2.5.1",
     "multiselect-react-dropdown": "^2.0.25",
+    "pdfjs-dist": "^4.0.379",
     "react": "^18.2.0",
     "react-bootstrap": "^2.9.1",
     "react-dom": "^18.2.0",

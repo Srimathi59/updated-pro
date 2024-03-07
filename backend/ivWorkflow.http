@@ -14,11 +14,11 @@ PUT http://localhost:1234/iv/ivacknowledgelevel2/0/60MEC/RPT5059
 
 ###
 
-GET http://localhost:1234/iv/ivloadforlevel3/1/60CS03
+GET http://localhost:1234/iv/ivloadforlevel3/1/60CS01
 
 ###
 
-PUT http://localhost:1234/iv/ivacknowledgelevel3/1/60CS03/RPT5059
+PUT http://localhost:1234/iv/ivacknowledgelevel3/1/60CS01/RPT5059
 
 ###
 

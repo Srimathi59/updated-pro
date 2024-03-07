@@ -1849,7 +1849,7 @@ newPdf.text('Principal', 167, 234);
                     {/* <a className="topic-heading" href="/add"><button class="view" id="addButton">+ Add</button></a> */}
                               </div>
                               <div className='table-responsive text-nowrap'>
-   <table className='table table-striped '>
+   <table className='table table-striped'>
                     <thead>
                         <tr>
                             <th>ID</th>

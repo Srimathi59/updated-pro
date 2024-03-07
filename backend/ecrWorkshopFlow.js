@@ -9,7 +9,17 @@ const path = require('path');
 
 // route.use(cors())
 
-
+route.get('/data/:report_id', (req, res) => {
+    const report_id = req.params.report_id;
+    const sql =  `SELECT * FROM data_iv where report_id=?`;
+    
+  
+    connection.query(sql,[report_id], (err, results) => {
+      if (err) throw err;
+  
+      res.json(results[0]);
+    });
+  });
 // Set up the storage for uploaded files
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {

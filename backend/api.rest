@@ -203,3 +203,6 @@ GET http://localhost:1234/load/loadforlevel2/1/6000
 ###
 
 PUT http://localhost:1234/load/acknowledgelevel2/data_management_seminar/1/6000/5033
+
+###
+GET http://localhost:1234/iv/data/RPT5063

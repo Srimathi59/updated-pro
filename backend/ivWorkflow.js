@@ -110,13 +110,10 @@ route.put('/update/:report_id',async(req,res)=>{
     // const sno = req.params.s_no
     const {
         mode_of_transport,
-        dept ,
-        year_of_students_visited ,
-        sem_of_students_visited ,
         total_class_strength ,
         no_of_students_visited ,
         students_visited_list,
-        place_of_visit,
+        places_of_visit,
         date_of_leaving,
 leaving_time,
 reaching_place,
@@ -140,18 +137,15 @@ day_3_AN_place ,
 day_3_night_time ,
 day_3_night_place ,
 date_of_arriving,
-time_of_arriving} = req.body
-    const sql = "update data_iv set acdyr_id=?, sem_id=? ,mode_of_transport=?, dept_id=?, year_of_students_visited=? ,sem_of_students_visited=?, total_class_strength=?, no_of_students_visited=?, students_visited_list=?, places_of_visit=?,date_of_leaving=?,leaving_time=?,reaching_place=?,day_1_reaching_time=?, day_1_FN_time=?, day_1_FN_place=?, day_1_AN_time=?, day_1_AN_place=?, day_1_night_time=?, day_1_night_place=?, day_2_FN_time=?, day_2_FN_place=?, day_2_AN_time=?, day_2_AN_place=?, day_2_night_time=?, day_2_night_place=?, day_3_FN_time=?, day_3_FN_place=?, day_3_AN_time=?, day_3_AN_place=?, day_3_night_time=?, day_3_night_place=?, date_of_arriving=?, time_of_arriving=? where report_id=?"
-    base.query(sql,[acdyr_id,
-        sem_id,
+time_of_arriving,
+completion_date} = req.body
+    const sql = "update data_iv set mode_of_transport=?, total_class_strength=?, no_of_students_visited=?, students_visited_list=?, places_of_visit=?,date_of_leaving=?,leaving_time=?,reaching_place=?,day_1_reaching_time=?, day_1_FN_time=?, day_1_FN_place=?, day_1_AN_time=?, day_1_AN_place=?, day_1_night_time=?, day_1_night_place=?, day_2_FN_time=?, day_2_FN_place=?, day_2_AN_time=?, day_2_AN_place=?, day_2_night_time=?, day_2_night_place=?, day_3_FN_time=?, day_3_FN_place=?, day_3_AN_time=?, day_3_AN_place=?, day_3_night_time=?, day_3_night_place=?, date_of_arriving=?, time_of_arriving=?, completion_date=? where report_id=?"
+    base.query(sql,[
         mode_of_transport,
-        dept,
-        year_of_students_visited,
-        sem_of_students_visited,
         total_class_strength,
         no_of_students_visited,
         students_visited_list,
-        place_of_visit,
+        places_of_visit,
         date_of_leaving,
         leaving_time,
         reaching_place,
@@ -176,6 +170,7 @@ time_of_arriving} = req.body
         day_3_night_place,
         date_of_arriving,
         time_of_arriving,
+        completion_date,
     req.params.report_id],(err,result)=>{
         if(err){
             console.log(err)
@@ -1307,4 +1302,1249 @@ route.get('/ivloadforlevel5/:deptId/:empId', async (req, res) => {
     }
 })
 
+//completion................//
+
+route.get('/loadivCompletion/:deptId/:tableName',async(req,res)=>{
+    const dId=req.params.deptId
+    let sql=`select * from data_iv where final_proposal_status=1 and report_completion_status=0 and final_completion_status=0 and final_report_status=0 and dept_id=?`
+    base.query(sql,[dId],(err,row)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        if(row.length==0){
+            res.status(404).json({error:"No workshop to be approved"})
+            return
+        }
+        res.status(200).json({row})
+    })
+})
+
+//------------------//
+
+route.get('/ivcompletionloadforlevel1/:deptId/:empId', async (req, res) => {
+    const dId = req.params.deptId;
+    const eId = req.params.empId;
+    if(dId==0||dId=="0"){
+        let sql = `select report_lvl1,data_table_name from data_approval where report_lvl1 like ? and data_table_name != "data_iv"`;
+
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            base.query(sql, [ '%' + eId + '%'], (err, row) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                    return;
+                }
+                resolve(row);
+            });
+        });
+
+        if (rows.length === 0) {
+            console.log("No approvals");
+            // res.status(200).json([]);
+            return;
+        }
+
+
+            sql = `select * from data_iv  AS seminar INNER JOIN data_sub_report_type AS sub_report_type ON seminar.event_name = sub_report_type.table_name INNER JOIN data_major_report_type AS major_report_type ON sub_report_type.major_report_id = major_report_type.major_report_id   where final_proposal_status=1 and lvl_1_completion_sign is null and report_completion_status=0 and final_completion_status=0 and final_report_status=0`;
+
+            const resultRows = await new Promise((resolve, reject) => {
+                base.query(sql, (err, rows) => {
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                        return;
+                    }
+                    resolve(rows);
+                });
+            });
+
+            if (resultRows.length > 0) {
+                resultArr.push({resultRows});
+            }
+        
+
+        res.status(200).json({resultArr});
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+    }else{
+        let sql = `select report_lvl1,data_table_name from data_approval where dept_id=? and report_lvl1 like ? and data_table_name != "data_iv"`;
+
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            base.query(sql, [dId, '%' + eId + '%'], (err, row) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                    return;
+                }
+                resolve(row);
+            });
+        });
+
+        if (rows.length === 0) {
+            console.log("No approvals");
+            // res.status(200).json([]);
+            return;
+        }
+
+            sql = `select * from data_iv AS seminar INNER JOIN data_sub_report_type AS sub_report_type ON seminar.event_name = sub_report_type.table_name INNER JOIN data_major_report_type AS major_report_type ON sub_report_type.major_report_id = major_report_type.major_report_id   where final_proposal_status=1 and lvl_1_completion_sign is null and report_completion_status=0 and final_completion_status=0 and final_report_status=0 and completion_date is not null and dept_id=?`;
+
+            const resultRows = await new Promise((resolve, reject) => {
+                base.query(sql, [dId], (err, rows) => {
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                        return;
+                    }
+                    resolve(rows);
+                });
+            });
+
+            if (resultRows.length > 0) {
+                resultArr.push({resultRows});
+            }
+        
+
+        res.status(200).json({resultArr});
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+    }
+});
+
+
+
+
+route.put('/completionacknowledgelevel1/:tableName/:deptId/:empId/:report_id',async(req,res)=>{
+    const dId=req.params.deptId
+    const eId=req.params.empId
+    const rId=req.params.report_id
+    if(dId==0||dId=="0"){
+        let sql = `select * from data_approval where data_table_name="${req.params.tableName}"`
+    base.query(sql,(err,rows)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        else if(rows.length==0){    
+            res.status(201).json({error:"No matches found"})
+            return
+        }
+        // res.status(200).json({rows})
+        console.log("Hello"+rows[0].report_lvl2)
+        if(rows[0].report_lvl2==null){
+            console.log("HEY")
+            let sql=`select report_id from ${req.params.tableName} where final_proposal_status=1 and report_completion_status=0 and final_completion_status=0 and final_report_status=0 and report_id=?`
+            base.query(sql,[rId],(err,row)=>{
+            if(err){
+                res.status(500).json({error:err.message})
+                return
+            }
+            if(row.length==0){
+                res.status(404).json({error:"No records to acknowledge"})
+                return
+            }
+        //no need
+            console.log(row)
+            console.log("In")
+                sql=`update data_iv set lvl_1_completion_sign=?, report_completion_status=report_completion_status+1, final_completion_status=final_completion_status+1,final_report_status=final_report_status+1 where final_proposal_status=1 and report_completion_status=0 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,rId],(err,result)=>{
+                    if(err){
+                        console.log("111")
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        console.log("222")
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    console.log("333")
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+        //     }
+        //     else{
+        //         res.status(404).json({error:"Forbidden access"})
+        //     }
+        // })
+    })
+        }else{
+            console.log("hiiiiiiiiii")
+            let sql=`select report_id from data_iv where final_proposal_status=1 and report_completion_status=0 and final_completion_status=0 and final_report_status=0 and report_id=?`
+    base.query(sql,[rId],(err,row)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        if(row.length==0){
+            res.status(404).json({error:"No records to acknowledge"})
+            return
+        }
+        sql=`update data_iv  set lvl_1_completion_sign=?, report_completion_status=report_completion_status+1 where final_proposal_status=1 and report_completion_status=0 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,rId],(err,result)=>{
+                    if(err){
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+        //     }
+        //     else{
+        //         res.status(404).json({error:"Forbidden access"})
+        //     }
+        // })
+    })
+        }
+    })
+    }else{
+        let sql = `select * from data_approval where dept_id=? and data_table_name="${req.params.tableName}"`
+    base.query(sql,[dId],(err,rows)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        else if(rows.length==0){
+            res.status(201).json({error:"No matches found"})
+            return
+        }
+        // res.status(200).json({rows})
+        console.log("Hello"+rows[0].report_lvl2)
+        if(rows[0].report_lvl2==null){
+            console.log("HEY")
+            let sql=`select report_id from ${req.params.tableName} where dept_id=? and final_proposal_status=1 and report_completion_status=0 and final_completion_status=0 and final_report_status=0 and report_id=?`
+            base.query(sql,[dId,rId],(err,row)=>{
+            if(err){
+                res.status(500).json({error:err.message})
+                return
+            }
+            if(row.length==0){
+                res.status(404).json({error:"No records to acknowledge"})
+                return
+            }
+        //no need
+            console.log(row)
+            console.log("In")
+            sql=`update data_iv set lvl_1_completion_sign=?, report_completion_status=report_completion_status+1, final_completion_status=final_completion_status+1,final_report_status=final_report_status+1 where dept_id=? and final_proposal_status=1 and report_completion_status=0 and final_completion_status=0 and final_report_status=0 and report_id=?`
+            base.query(sql,[eId,dId,rId],(err,result)=>{
+                if(err){
+                    console.log("111")
+                    res.status(500).json({error:err.message})
+                    return
+                }
+                if(result.affectedRows==0){
+                    console.log("222")
+                    res.status(404).json({error:"Event hasn't completed yet"})
+                    return
+                }
+                console.log("333")
+                res.status(200).json({message:"acknowledged by level"})
+            })
+    //     }
+    //     else{
+    //         res.status(404).json({error:"Forbidden access"})
+    //     }
+    // })
+})
+    }else{
+        console.log("hiiiiiiiiii")
+        let sql=`select report_id from data_iv where dept_id=? and final_proposal_status=1 and report_completion_status=0 and final_completion_status=0 and final_report_status=0 and report_id=?`
+base.query(sql,[dId,rId],(err,row)=>{
+    if(err){
+        res.status(500).json({error:err.message})
+        return
+    }
+    if(row.length==0){
+        res.status(404).json({error:"No records to acknowledge"})
+        return
+    }
+
+    sql=`update data_iv set lvl_1_completion_sign=?, report_completion_status=report_completion_status+1 where dept_id=? and final_proposal_status=1 and report_completion_status=0 and final_completion_status=0 and final_report_status=0 and report_id=?`
+    base.query(sql,[eId,dId,rId],(err,result)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        if(result.affectedRows==0){
+            res.status(404).json({error:"Event hasn't completed yet"})
+            return
+        }
+        res.status(200).json({message:"acknowledged by level"})
+    })
+//     }
+//     else{
+//         res.status(404).json({error:"Forbidden access"})
+//     }
+// })
+})
+}
+})
+}
+})
+
+route.get('/ivcompletionloadforlevel2/:deptId/:empId', async (req, res) => {
+    const dId = req.params.deptId;
+    const eId = req.params.empId;
+    let resultArr = [];  // Declare resultArr before the loop
+    if(dId==0||dId=="0"){
+        let sql = `select report_lvl2, data_table_name from data_approval where report_lvl2 like ? and data_table_name != "data_iv"`;
+
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            base.query(sql, [ '%' + eId + '%'], (err, row) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                    return;
+                }
+                resolve(row);
+            });
+        });
+
+        if (rows.length === 0) {
+            console.log("No approvals");
+            // res.status(200).json([]);
+            return;
+        }
+
+        for (let i = 0; i < rows.length; i++) {
+            sql = `select * from data_iv   where report_completion_status=1 and lvl_2_completion_sign is null and final_proposal_status=1 and final_completion_status=0 and final_report_status=0`;
+
+            const resultRows = await new Promise((resolve, reject) => {
+                base.query(sql, (err, rows) => {
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                        return;
+                    }
+                    resolve(rows);
+                });
+            });
+
+            if (resultRows.length > 0) {
+                resultArr.push({resultRows});
+            }
+        }
+
+        res.status(200).json({resultArr});
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+    }else{
+        let sql = `select report_lvl2, data_table_name from data_approval where dept_id=? and report_lvl2 like ? and data_table_name != "data_iv"`;
+
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            base.query(sql, [dId, '%' + eId + '%'], (err, row) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                    return;
+                }
+                resolve(row);
+            });
+        });
+
+        if (rows.length === 0) {
+            console.log("No approvals");
+            // res.status(200).json([]);
+            return;
+        }
+
+        
+            sql = `select * from data_iv   where report_completion_status=1 and lvl_2_completion_sign is null and final_proposal_status=1 and final_completion_status=0 and final_report_status=0 and dept_id=?`;
+
+            const resultRows = await new Promise((resolve, reject) => {
+                base.query(sql, [dId], (err, rows) => {
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                        return;
+                    }
+                    resolve(rows);
+                });
+            });
+
+            if (resultRows.length > 0) {
+                resultArr.push({resultRows});
+            }
+        
+
+        res.status(200).json({resultArr});
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+    }
+});
+
+route.post('/ivcompletionacknowledgelevel2/:tableName/:deptId/:empId/:report_id',async(req,res)=>{
+    const dId=req.params.deptId
+    const eId=req.params.empId
+    const rId=req.params.report_id
+    if(dId==0||dId=="0"){
+        let sql = `select * from data_approval where data_table_name="data_iv"`
+    base.query(sql,(err,rows)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        else if(rows.length==0){
+            res.status(201).json({error:"No matches found"})
+            return
+        }
+        // res.status(200).json({rows})
+        console.log("Hello"+rows[0].report_lvl3)
+        if(rows[0].report_lvl3==null){
+            console.log("HEY")
+            let sql=`select report_id from data_iv where final_proposal_status=1 and report_completion_status=1 and final_completion_status=0 and final_report_status=0 and report_id=?`
+            base.query(sql,[rId],(err,row)=>{
+            if(err){
+                res.status(500).json({error:err.message})
+                return
+            }
+            if(row.length==0){
+                res.status(404).json({error:"No records to acknowledge"})
+                return
+            }
+        //no need
+            console.log(row)
+
+            console.log("In")
+                sql=`update data_iv set lvl_2_completion_sign=?, report_completion_status=report_completion_status+1, final_completion_status=final_completion_status+1, final_report_status=final_report_status+1 where final_proposal_status=1 and report_completion_status=1 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,rId],(err,result)=>{
+                    if(err){
+                        console.log("111")
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        console.log("222")
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    console.log("333")
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+        //     }
+        //     else{
+        //         res.status(404).json({error:"Forbidden access"})
+        //     }
+        // })
+    })
+        }else{
+            console.log("hiiiiiiiiii")
+            let sql=`select report_id from data_iv where report_completion_status=1 and final_completion_status=0 and final_report_status=0 and report_id=?`
+    base.query(sql,[rId],(err,row)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        if(row.length==0){
+            res.status(404).json({error:"No records to acknowledge"})
+            return
+        }
+        sql=`update data_iv set lvl_2_completion_sign=?, report_completion_status=report_completion_status+1 where final_proposal_status=1 and report_completion_status=1 and final_completion_status=0 and final_report_status=0 and report_id=?`
+        base.query(sql,[eId,rId],(err,result)=>{
+            if(err){
+                res.status(500).json({error:err.message})
+                return
+            }
+            if(result.affectedRows==0){
+                res.status(404).json({error:"Event hasn't completed yet"})
+                return
+            }
+            res.status(200).json({message:"acknowledged by level"})
+        })
+
+    })
+}
+})
+}else{
+let sql = `select * from data_approval where dept_id=? and data_table_name="data_iv"`
+base.query(sql,[dId],(err,rows)=>{
+if(err){
+    res.status(500).json({error:err.message})
+    return
+}
+else if(rows.length==0){
+    res.status(201).json({error:"No matches found"})
+    return
+}
+// res.status(200).json({rows})
+console.log("Hello"+rows[0].report_lvl3)
+if(rows[0].report_lvl3==null){
+    console.log("HEY")
+    let sql=`select report_id from data_iv where dept_id=? and final_proposal_status=1 and report_completion_status=1 and final_completion_status=0 and final_report_status=0 and report_id=?`
+    base.query(sql,[dId,rId],(err,row)=>{
+    if(err){
+        res.status(500).json({error:err.message})
+        return
+    }
+    if(row.length==0){
+        res.status(404).json({error:"No records to acknowledge"})
+        return
+    }
+//no need
+    console.log(row)
+
+    console.log("In")
+                sql=`update data_iv set lvl_2_completion_sign=?, report_completion_status=report_completion_status+1, final_completion_status=final_completion_status+1, final_report_status=final_report_status+1 where dept_id=? and final_proposal_status=1 and report_completion_status=1 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,dId,rId],(err,result)=>{
+                    if(err){
+                        console.log("111")
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        console.log("222")
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    console.log("333")
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+        //     }
+        //     else{
+        //         res.status(404).json({error:"Forbidden access"})
+        //     }
+        // })
+    })
+        }else{
+            console.log("hiiiiiiiiii")
+            let sql=`select report_id from data_iv where dept_id=? and report_completion_status=1 and final_completion_status=0 and final_report_status=0 and report_id=?`
+    base.query(sql,[dId,rId],(err,row)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        if(row.length==0){
+            res.status(404).json({error:"No records to acknowledge"})
+            return
+        }
+        sql=`update data_iv set lvl_2_completion_sign=?, report_completion_status=report_completion_status+1 where dept_id=? and final_proposal_status=1 and report_completion_status=1 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,dId,rId],(err,result)=>{
+                    if(err){
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+
+            })
+        }
+    })
+    }
+})
+
+route.get('/ivcompletionloadforlevel3/:deptId/:empId', async (req, res) => {
+    const dId = req.params.deptId;
+    const eId = req.params.empId;
+    if(dId==0||dId=="0"){
+        let sql = `select report_lvl3, data_table_name from data_approval where report_lvl3 like ? and data_table_name != "data_iv"`;
+
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            base.query(sql, [ '%' + eId + '%'], (err, row) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                    return;
+                }
+                resolve(row);
+            });
+        });
+
+        if (rows.length === 0) {
+            console.log("No approvals");
+            return;
+        }
+
+     
+            sql = `select * from data_iv    where final_proposal_status=1 and lvl_3_completion_sign is null and final_proposal_status=1 and report_completion_status=2 and final_completion_status=0 and final_report_status=0`;
+
+            const resultRows = await new Promise((resolve, reject) => {
+                base.query(sql, [dId], (err, rows) => {
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                        return;
+                    }
+                    resolve(rows);
+                });
+            });
+
+            if (resultRows.length > 0) {
+                resultArr.push({resultRows});
+            }
+        
+
+        if (resultArr.length > 0) {
+            res.status(200).json({resultArr});
+        } else {
+            console.log("No records");
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+    }else{
+        let sql = `select report_lvl3, data_table_name from data_approval where dept_id=? and report_lvl3 like ? and data_table_name != "data_iv"`;
+
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            base.query(sql, [dId, '%' + eId + '%'], (err, row) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                    return;
+                }
+                resolve(row);
+            });
+        });
+
+        if (rows.length === 0) {
+            console.log("No approvals");
+            return;
+        }
+
+        const resultArr = [];
+        for (let i = 0; i < rows.length; i++) {
+            sql = `select * from data_iv  where final_proposal_status=1 and lvl_3_completion_sign is null and final_proposal_status=1 and report_completion_status=2 and final_completion_status=0 and final_report_status=0 and dept_id=?`;
+
+            const resultRows = await new Promise((resolve, reject) => {
+                base.query(sql, [dId], (err, rows) => {
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                        return;
+                    }
+                    resolve(rows);
+                });
+            });
+
+            if (resultRows.length > 0) {
+                resultArr.push({resultRows});
+            }
+        }
+
+        if (resultArr.length > 0) {
+            res.status(200).json({resultArr});
+        } else {
+            console.log("No records");
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+    }
+});
+
+route.put('/ivcompletionacknowledgelevel3/:tableName/:deptId/:empId/:report_id',async(req,res)=>{
+    const dId=req.params.deptId
+    const eId=req.params.empId
+    const rId=req.params.report_id
+    if(dId==0||dId=="0"){
+        let sql = `select * from data_approval where data_table_name="${req.params.tableName}"`
+    base.query(sql,(err,rows)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        else if(rows.length==0){
+            res.status(201).json({error:"No matches found"})
+            return
+        }
+        // res.status(200).json({rows})
+        console.log("Hello"+rows[0].report_lvl4)
+        if(rows[0].report_lvl4==null){
+            console.log("HEY")
+            let sql=`select report_id from data_iv where final_proposal_status=1 and report_completion_status=2 and final_completion_status=0 and final_report_status=0 and report_id=?`
+            base.query(sql,[rId],(err,row)=>{
+            if(err){
+                res.status(500).json({error:err.message})
+                return
+            }
+            if(row.length==0){
+                res.status(404).json({error:"No records to acknowledge"})
+                return
+            }
+            console.log("In")
+                sql=`update data_iv set lvl_3_completion_sign=?, report_completion_status=report_completion_status+1, final_completion_status=final_completion_status+1 where report_completion_status=2 and final_proposal_status=1 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,rId],(err,result)=>{
+                    if(err){
+                        console.log("111")
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        console.log("222")
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    console.log("333")
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+        //     }
+        //     else{
+        //         res.status(404).json({error:"Forbidden access"})
+        //     }
+        // })
+    })
+        }else{
+            console.log("hiiiiiiiiii")
+            let sql=`select report_id from data_iv where final_proposal_status=1 and report_completion_status=2 and final_completion_status=0 and final_report_status=0 and report_id=?`
+    base.query(sql,[rId],(err,row)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        if(row.length==0){
+            res.status(404).json({error:"No records to acknowledge"})
+            return
+        }
+        sql=`update data_iv set lvl_3_completion_sign=?, report_completion_status=report_completion_status+1 where final_proposal_status=1 and final_completion_status=0 and report_completion_status=2 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,rId],(err,result)=>{
+                    if(err){
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+        //     }
+        //     else{
+        //         res.status(404).json({error:"Forbidden access"})
+        //     }
+        // })
+    })
+        }
+    })
+    }else{
+        let sql = `select * from data_approval where dept_id=? and data_table_name="data_iv"`
+    base.query(sql,[dId],(err,rows)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        else if(rows.length==0){
+            res.status(201).json({error:"No matches found"})
+            return
+        }
+        // res.status(200).json({rows})
+        console.log("Hello"+rows[0].report_lvl4)
+        if(rows[0].report_lvl4==null){
+            console.log("HEY")
+            let sql=`select report_id from data_iv where dept_id=? and final_proposal_status=1 and report_completion_status=2 and final_completion_status=0 and final_report_status=0 and report_id=?`
+            base.query(sql,[dId,rId],(err,row)=>{
+            if(err){
+                res.status(500).json({error:err.message})
+                return
+            }
+            if(row.length==0){
+                res.status(404).json({error:"No records to acknowledge"})
+                return
+            }
+            console.log("In")
+                sql=`update data_iv set lvl_3_completion_sign=?, report_completion_status=report_completion_status+1, final_completion_status=final_completion_status+1 where dept_id=? and report_completion_status=2 and final_proposal_status=1 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,dId,rId],(err,result)=>{
+                    if(err){
+                        console.log("111")
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        console.log("222")
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    console.log("333")
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+        //     }
+        //     else{
+        //         res.status(404).json({error:"Forbidden access"})
+        //     }
+        // })
+    })
+        }else{
+            console.log("hiiiiiiiiii")
+            let sql=`select report_id from data_iv where dept_id=? and final_proposal_status=1 and report_completion_status=2 and final_completion_status=0 and final_report_status=0 and report_id=?`
+    base.query(sql,[dId,rId],(err,row)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        if(row.length==0){
+            res.status(404).json({error:"No records to acknowledge"})
+            return
+        }
+        sql=`update data_iv set lvl_3_completion_sign=?, report_completion_status=report_completion_status+1 where dept_id=? and final_proposal_status=1 and final_completion_status=0 and report_completion_status=2 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,dId,rId],(err,result)=>{
+                    if(err){
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+            })
+        }
+    })
+    }
+})
+
+route.get('/ivcompletionloadforlevel4/:deptId/:empId', async (req, res) => {
+    const dId = req.params.deptId;
+    const eId = req.params.empId;
+    if(dId==0||dId=="0"){
+        let sql = `select report_lvl4, data_table_name from data_approval where report_lvl4 like ? and data_table_name != "data_iv"`;
+
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            base.query(sql, [ '%' + eId + '%'], (err, row) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                    return;
+                }
+                resolve(row);
+            });
+        });
+
+        if (rows.length === 0) {
+            console.log("No approvals");
+            return;
+        }
+
+            sql = `select * from data_iv where final_proposal_status=1 and lvl_4_completion_sign is null and report_completion_status=3 and final_completion_status=0 and final_report_status=0`;
+
+            const resultRows = await new Promise((resolve, reject) => {
+                base.query(sql, [dId], (err, rows) => {
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                        return;
+                    }
+                    resolve(rows);
+                });
+            });
+
+            if (resultRows.length > 0) {
+                resultArr.push({ resultRows });
+            }
+        
+
+        if (resultArr.length > 0) {
+            res.status(200).json({ resultArr });
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+    }else{
+        let sql = `select report_lvl4, data_table_name from data_approval where dept_id=? and report_lvl4 like ? and data_table_name != "data_iv"`;
+
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            base.query(sql, [dId, '%' + eId + '%'], (err, row) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                    return;
+                }
+                resolve(row);
+            });
+        });
+
+        if (rows.length === 0) {
+            console.log("No approvals");
+            return;
+        }
+
+      
+            sql = `select * from data_iv where final_proposal_status=1 and lvl_4_completion_sign is null and report_completion_status=3 and final_completion_status=0 and final_report_status=0 and dept_id=?`;
+
+            const resultRows = await new Promise((resolve, reject) => {
+                base.query(sql, [dId], (err, rows) => {
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                        return;
+                    }
+                    resolve(rows);
+                });
+            });
+
+            if (resultRows.length > 0) {
+                resultArr.push({ resultRows });
+            }
+        
+
+        if (resultArr.length > 0) {
+            res.status(200).json({ resultArr });
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+    }
+});
+
+route.put('/ivcompletionacknowledgelevel4/:tableName/:deptId/:empId/:report_id',async(req,res)=>{
+    const dId=req.params.deptId
+    const eId=req.params.empId
+    const rId=req.params.report_id
+    if(dId==0||dId=="0"){
+        let sql = `select * from data_approval where data_table_name="${req.params.tableName}"`
+    base.query(sql,(err,rows)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        else if(rows.length==0){
+            res.status(201).json({error:"No matches found"})
+            return
+        }
+        // res.status(200).json({rows})
+        console.log("Hello"+rows[0].report_lvl4)
+        if(rows[0].report_lvl5==null){
+            console.log("HEY")
+            let sql=`select report_id from data_iv where final_proposal_status=1 and report_completion_status=3 and final_completion_status=0 and final_report_status=0 and report_id=?`
+            base.query(sql,[rId],(err,row)=>{
+            if(err){
+                res.status(500).json({error:err.message})
+                return
+            }
+            if(row.length==0){
+                res.status(404).json({error:"No records to acknowledge"})
+                return
+            }
+        //no need
+            console.log(row)
+            console.log("In")
+            sql=`update data_iv set lvl_4_completion_sign=?, report_completion_status=report_completion_status+1, final_completion_status=final_completion_status+1, final_report_status=final_report_status+1 where final_proposal_status=1 and report_completion_status=3 and final_completion_status=0 and final_report_status=0 and report_id=?`
+            base.query(sql,[eId,rId],(err,result)=>{
+                if(err){
+                    console.log("111")
+                    res.status(500).json({error:err.message})
+                    return
+                }
+                if(result.affectedRows==0){
+                    console.log("222")
+                    res.status(404).json({error:"Event hasn't completed yet"})
+                    return
+                }
+                console.log("333")
+                res.status(200).json({message:"acknowledged by level"})
+            })
+        })
+    }else{
+        console.log("hiiiiiiiiii")
+        let sql=`select report_id from data_iv where final_proposal_status=1 and report_completion_status=3 and final_completion_status=0 and final_report_status=0 and report_id=?`
+base.query(sql,[rId],(err,row)=>{
+    if(err){
+        res.status(500).json({error:err.message})
+        return
+    }
+    if(row.length==0){
+        res.status(404).json({error:"No records to acknowledge"})
+        return
+    }
+    sql=`update data_iv set lvl_4_completion_sign=?, report_completion_status=report_completion_status+1 where final_proposal_status=1 and report_completion_status=3 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,rId],(err,result)=>{
+                    if(err){
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+        //     }
+        //     else{
+        //         res.status(404).json({error:"Forbidden access"})
+        //     }
+        // })
+    })
+        }
+    })
+    }else{
+        let sql = `select * from data_approval where dept_id=? and data_table_name="${req.params.tableName}"`
+    base.query(sql,[dId],(err,rows)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        else if(rows.length==0){
+            res.status(201).json({error:"No matches found"})
+            return
+        }
+        // res.status(200).json({rows})
+        console.log("Hello"+rows[0].report_lvl4)
+        if(rows[0].report_lvl5==null){
+            console.log("HEY")
+            let sql=`select report_id from data_iv where dept_id=? and final_proposal_status=1 and report_completion_status=3 and final_completion_status=0 and final_report_status=0 and report_id=?`
+            base.query(sql,[dId,rId],(err,row)=>{
+            if(err){
+                res.status(500).json({error:err.message})
+                return
+            }
+            if(row.length==0){
+                res.status(404).json({error:"No records to acknowledge"})
+                return
+            }
+        //no need
+            console.log(row)
+            console.log("In")
+                sql=`update data_iv set lvl_4_completion_sign=?, report_completion_status=report_completion_status+1, final_completion_status=final_completion_status+1, final_report_status=final_report_status+1 where dept_id=? and final_proposal_status=1 and report_completion_status=3 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,dId,rId],(err,result)=>{
+                    if(err){
+                        console.log("111")
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        console.log("222")
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    console.log("333")
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+        //     }
+        //     else{
+        //         res.status(404).json({error:"Forbidden access"})
+        //     }
+        // })
+    })
+        }else{
+            console.log("hiiiiiiiiii")
+            let sql=`select report_id from data_iv where dept_id=? and final_proposal_status=1 and report_completion_status=3 and final_completion_status=0 and final_report_status=0 and report_id=?`
+    base.query(sql,[dId,rId],(err,row)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        if(row.length==0){
+            res.status(404).json({error:"No records to acknowledge"})
+            return
+        }
+        sql=`update data_iv set lvl_4_completion_sign=?, report_completion_status=report_completion_status+1 where dept_id=? and final_proposal_status=1 and report_completion_status=3 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,dId,rId],(err,result)=>{
+                    if(err){
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+        //     }
+        //     else{
+        //         res.status(404).json({error:"Forbidden access"})
+        //     }
+        // })
+    })
+        }
+    })
+    }
+})
+
+route.get('/ivcompletionloadforlevel5/:deptId/:empId', async (req, res) => {
+    const dId = req.params.deptId;
+    const eId = req.params.empId;
+    if(dId==0||dId=="0"){
+        let sql = `select report_lvl5, data_table_name from data_approval where report_lvl5 like ? and data_table_name != "data_iv"`;
+
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            base.query(sql, [ '%' + eId + '%'], (err, row) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                    return;
+                }
+                resolve(row);
+            });
+        });
+
+        if (rows.length === 0) {
+            console.log("No approvals");
+            return;
+        }
+
+       
+            sql = `select * from data_iv  where final_proposal_status=1 and lvl_5_completion_sign is null and report_completion_status=4 and final_completion_status=0 and final_report_status=0`;
+
+            const resultRows = await new Promise((resolve, reject) => {
+                base.query(sql, [dId], (err, rows) => {
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                        return;
+                    }
+                    resolve(rows);
+                });
+            });
+
+            if (resultRows.length > 0) {
+                resultArr.push({ resultRows });
+            }
+        
+
+        if (resultArr.length > 0) {
+            res.status(200).json({ resultArr });
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+    }else{
+        let sql = `select report_lvl5, data_table_name from data_approval where dept_id=? and report_lvl5 like ? and data_table_name != "data_iv"`;
+
+    try {
+        const rows = await new Promise((resolve, reject) => {
+            base.query(sql, [dId, '%' + eId + '%'], (err, row) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                    return;
+                }
+                resolve(row);
+            });
+        });
+
+        if (rows.length === 0) {
+            console.log("No approvals");
+            return;
+        }
+
+       
+            sql = `select * from data_iv where final_proposal_status=1 and lvl_5_completion_sign is null and report_completion_status=4 and final_completion_status=0 and final_report_status=0 and dept_id=?`;
+
+            const resultRows = await new Promise((resolve, reject) => {
+                base.query(sql, [dId], (err, rows) => {
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                        return;
+                    }
+                    resolve(rows);
+                });
+            });
+
+            if (resultRows.length > 0) {
+                resultArr.push({ resultRows });
+            }
+        
+
+        if (resultArr.length > 0) {
+            res.status(200).json({ resultArr });
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+    }
+});
+
+route.put('/ivcompletionacknowledgelevel5/:tableName/:deptId/:empId/:report_id',async(req,res)=>{
+    const dId=req.params.deptId
+    const eId=req.params.empId
+    const rId=req.params.report_id
+    if(dId==0||dId=="0"){
+        let sql=`select report_id from data_iv where final_proposal_status=1 and report_completion_status=4 and final_completion_status=0 and final_report_status=0 and report_id=?`
+    base.query(sql,[rId],(err,row)=>{
+        if(err){
+            res.status(500).json({error:err.message})
+            return
+        }
+        if(row.length==0){
+            res.status(404).json({error:"No records to acknowledge"})
+            return
+        }
+        sql=`update data_iv set lvl_5_completion_sign=?, report_completion_status=report_completion_status+1, final_completion_status=final_completion_status+1, final_report_status=final_report_status+1 where final_proposal_status=1 and report_completion_status=4 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,rId],(err,result)=>{
+                    if(err){
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+            })
+        }else{
+            let sql=`select report_id from data_iv where dept_id=? and final_proposal_status=1 and report_completion_status=4 and final_completion_status=0 and final_report_status=0 and report_id=?`
+        base.query(sql,[dId,rId],(err,row)=>{
+            if(err){
+                res.status(500).json({error:err.message})
+                return
+            }
+            if(row.length==0){
+                res.status(404).json({error:"No records to acknowledge"})
+                return
+            }
+            sql=`update data_iv set lvl_5_completion_sign=?, report_completion_status=report_completion_status+1, final_completion_status=final_completion_status+1, final_report_status=final_report_status+1 where dept_id=? and final_proposal_status=1 and report_completion_status=4 and final_completion_status=0 and final_report_status=0 and report_id=?`
+                base.query(sql,[eId,dId,rId],(err,result)=>{
+                    if(err){
+                        res.status(500).json({error:err.message})
+                        return
+                    }
+                    if(result.affectedRows==0){
+                        res.status(404).json({error:"Event hasn't completed yet"})
+                        return
+                    }
+                    res.status(200).json({message:"acknowledged by level"})
+                })
+            })
+        }
+    })
+
+
+
+
+
+
+
+
+
+
+route.get('/data/:report_id', (req, res) => {
+    const report_id = req.params.report_id;
+    const sql =  `SELECT * FROM data_iv where report_id=?`;
+    
+  
+    base.query(sql,[report_id], (err, results) => {
+      if (err) {
+        res.status(500).json(err.message)
+        return
+      }else if(results.length==0){
+        res.status(404).json("No records")
+        return
+      }
+  
+      res.status(200).json(results[0]);
+    });
+  });
 module.exports=route
